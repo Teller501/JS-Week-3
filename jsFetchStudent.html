@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Student</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+
+  <body class="container">
+    <h3>All Students</h3>
+    <div style="height: 300px; overflow-y: scroll">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Id</th>
+            <th>Name</th>
+            <th>Born Data</th>
+            <th>Born Time</th>
+            <th></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="student-table-body"></tbody>
+      </table>
+    </div>
+    <button type="button" class="btn btn-primary" id="btn-add-student">
+      Add new student
+    </button>
+    <p
+      id="add-error-msg"
+      class="alert alert-danger"
+      style="max-width: 50%; display: none"
+      role="alert"
+    ></p>
+
+    <!-- Modal -->
+    <div
+      class="modal fade"
+      id="student-modal"
+      tabindex="-1"
+      aria-labelledby="exampleModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modal-title">Add Student</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <p>Student ID: <span id="student-id"></span></p>
+            <form>
+              <div class="mb-3">
+                <label for="input-name" class="form-label">Name</label>
+                <!--<input type="text" class="form-control" id="input-name" />-->
+                <select class="form-control" id="input-name">
+                  <option value="myValue">Tekst der vises</option>
+                  <option value="mySelectedValue" selected>
+                    Min valgte option
+                  </option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="input-born-date" class="form-label"
+                  >Born Date</label
+                >
+                <input type="date" class="form-control" id="input-born-date" />
+              </div>
+              <div class="mb-3">
+                <label for="input-born-time" class="form-label"
+                  >Born Time</label
+                >
+                <input
+                  type="time"
+                  class="form-control"
+                  id="input-born-time"
+                  value="00:00:00"
+                  step="1"
+                />
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              cancel
+            </button>
+            <button
+              id="btn-save"
+              type="button"
+              class="btn btn-primary"
+              data-bs-dismiss="modal"
+            >
+              Save changes
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!--END OF MODAL -->
+  </body>
+</html>
+
+<script>
+  let nextId = 200;
+  let students = [
+    {
+      id: 100,
+      name: "Madeleine Flynn",
+      bornDate: "2012-03-12",
+      bornTime: "12:01",
+    },
+    {
+      id: 101,
+      name: "Cecile Benson",
+      bornDate: "2011-09-21",
+      bornTime: "15:01",
+    },
+  ];
+
+  let names = ["Anders", "Peter", "Jan", "Bo"];
+
+  const URLstudents = "http://localhost:3333/students"; //For when we meet in the class - remember to set server.port = 3333
+  const URLstudent = "http://localhost:3333/student"; //For when we meet in the class
+
+  function setUpHandlers() {
+    document.getElementById("student-table-body").onclick = handleTableClick;
+    document.getElementById("btn-save").onclick = saveStudent;
+    document.getElementById("btn-add-student").onclick = makeNewStudent;
+  }
+  setUpHandlers();
+
+  function handleTableClick(evt) {
+    evt.preventDefault();
+    evt.stopPropagation();
+    const target = evt.target;
+
+    if (target.dataset.idDelete) {
+      //alert("Delete "+target.dataset.idDelete)
+      const idToDelete = Number(target.dataset.idDelete);
+
+      //apiStudentDelete(idToDelete)
+      const options = makeOptions("DELETE");
+      fetch(`${URLstudent}/${idToDelete}`, options)
+        .then(handleHttpErrors)
+        .catch((err) => {
+          if (err.apiError) {
+            console.error("Full API error: ", err.apiError);
+          } else {
+            console.error(err.message);
+          }
+        });
+
+      //student = students.filter(u => (u.id == idToDelete) ? false : true)
+      students = students.filter((s) => s.id !== idToDelete);
+
+      makeRows();
+    }
+
+    //if (target.dataset.dataEdit) {
+    //alert(target.dataset.dataEdit)
+    //alert(JSON.parse(target.dataset.dataEdit))
+    //    const student = JSON.parse(target.dataset.dataEdit)
+    //    showModal(student)
+    if (target.dataset.idEdit) {
+      const idToEdit = Number(target.dataset.idEdit);
+      const student = students.find((s) => s.id === idToEdit);
+      showModal(student);
+    }
+  }
+
+  function makeNewStudent() {
+    showModal({
+      id: null,
+      name: "",
+      bornDate: "0:0:0",
+      bornTime: null,
+    });
+  }
+
+  function showModal(student) {
+    const myModal = new bootstrap.Modal(
+      document.getElementById("student-modal")
+    );
+    document.getElementById("modal-title").innerText = student.id
+      ? "Edit Student"
+      : "Add Student";
+    // let lbl
+    // if (student.id) {lbl = "Edit Student"} else {lbl = "Add Student"}
+    // document.getElementById("modal-title").innerText = lbl
+    document.getElementById("student-id").innerText = student.id;
+    //document.getElementById("input-name").value = student.name;
+    let selectElement = document.getElementById("input-name");
+
+    /*let selectHtml = names
+      .map((n) => {
+        let isSelected = n === student.name ? "SELECTED" : "";
+        return `<option value="${n}" ${isSelected}>${n}</option>`;
+      })
+      .join("");
+
+    selectElement.innerHTML = selectHtml;*/
+
+    selectElement.innerHTML = "";
+
+    names.map((n) => {
+      let option = document.createElement("option");
+
+      option.value = n;
+      option.text = n;
+
+      if (n === student.name) {
+        option.selected;
+      }
+
+      selectElement.appendChild(option);
+    });
+
+    document.getElementById("input-born-date").value = student.bornDate;
+    document.getElementById("input-born-time").value = student.bornTime;
+    myModal.show();
+  }
+
+  async function saveStudent() {
+    let student = {};
+    student.id = Number(document.getElementById("student-id").innerText);
+    student.name = document.getElementById("input-name").value;
+    student.bornDate = document.getElementById("input-born-date").value;
+    student.bornTime = document.getElementById("input-born-time").value;
+
+    //TODO Save student on server  --> We will do this in the class
+    // const data = {name: "lis Benson", bornDate: "2012-03-31", bornTime: "16:01"};
+    // const options = makeOptions("POST",data);
+    // fetch("https://somewhereoutthere/student",options);
+
+    //Figure out how to update local data
+    if (student.id) {
+      //Edit
+      //apiStudentPut(student)
+      const options = makeOptions("PUT", student);
+      try {
+        student = await fetch(`${URLstudent}/${student.id}`, options).then(
+          handleHttpErrors
+        );
+      } catch (err) {
+        if (err.apiError) {
+          console.error("Full API error: ", err.apiError);
+        } else {
+          console.error(err.message);
+        }
+      }
+
+      /*students = students.map(u =>
+                if(u.id===student.id){
+                    return student
+                } else {
+                    return u
+                }
+            )*/
+      students = students.map((s) => (s.id === student.id ? student : s));
+    } else {
+      //apiStudentPost(student)
+      const options = makeOptions("POST", student);
+      try {
+        student = await fetch(URLstudent, options).then(handleHttpErrors);
+      } catch (err) {
+        if (err.apiError) {
+          console.error("Full API error: ", err.apiError);
+        } else {
+          console.error(err.message);
+        }
+      }
+      //remove when calling api as db decided id
+      //student.id = nextId++
+      students.push(student);
+    }
+
+    makeRows();
+  }
+
+  async function fetchStudents() {
+    // Todo  --> This is one of the things we will do in the class
+    try {
+      students = await fetch(URLstudents).then(handleHttpErrors);
+      console.log(students);
+    } catch (err) {
+      if (err.apiError) {
+        console.log("Full API error: ", err.apiError);
+      } else {
+        console.log(err.message);
+      }
+    }
+
+    makeRows();
+  }
+
+  function makeRows() {
+    //make rows from data
+    const rows = students.map(
+      (s) => `
+        <tr>
+            <td>${s.id}</td>
+            <td>${s.name}</td>
+            <td>${s.bornDate}</td>
+            <td>${s.bornTime}</td>
+            <td><a data-id-delete=${s.id} href="#">Delete</a></td>
+            <!-- <td><a data-data-edit='${JSON.stringify(
+              s
+            )}' href="#">Edit</a></td> -->
+            <td><a data-id-edit='${s.id}' href="#">Edit</a></td>
+        </tr>
+        `
+    );
+    document.getElementById("student-table-body").innerHTML = rows.join("");
+  }
+
+  fetchStudents();
+
+  // const data = {name: "lis Benson", bornDate: "2012-03-31", bornTime: "16:01"};
+  // const options = makeOptions("POST",data);
+  // fetch("https://somewhereoutthere/student",options);
+
+  function makeOptions(method, body) {
+    const opts = {
+      method: method,
+      headers: {
+        "Content-type": "application/json",
+        Accept: "application/json",
+      },
+    };
+    if (body) {
+      //Observe how we can add new fields to an object when needed
+      opts.body = JSON.stringify(body);
+    }
+    return opts;
+  }
+
+  async function handleHttpErrors(res) {
+    if (!res.ok) {
+      const errorResponse = await res.json();
+      const error = new Error(errorResponse.message);
+      error.apiError = errorResponse;
+      throw error;
+    }
+    return res.json();
+  }
+</script>
