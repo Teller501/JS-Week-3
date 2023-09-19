@@ -3,6 +3,29 @@
     let kommuner = [
     ];
 
+    let regioner = [
+        {
+            kode: 1081,
+            navn: "Region Nordjylland"
+        },
+        {
+            kode: 1082,
+            navn: "Region Midtjylland"
+        },
+        {
+            kode: 1083,
+            navn: "Region Syddanmark"
+        },
+        {
+            kode: 1084,
+            navn: "Region Hovedstaden"
+        },
+        {
+            kode: 1085,
+            navn: "Region Sjælland"
+        }
+    ]
+
     const URLkommuner = "http://localhost:3333/kommuner"; //For when we meet in the class - remember to set server.port = 3333
     const URLkommune  = "http://localhost:3333/kommuner"; //For when we meet in the class
 
@@ -43,8 +66,17 @@
     }
 
     function makeNewkommune() {
+        const existingKommuneCodes = kommuner.map(k => k.kode);
+    
+        let newKommuneCode = "0001";
+
+        if (existingKommuneCodes.length > 0) {
+            const maxKommuneCode = Math.max(...existingKommuneCodes.map(code => parseInt(code, 10)));
+            newKommuneCode = (maxKommuneCode + 1).toString().padStart(4, '0');
+        }
+
         showModal({
-            kode: null,
+            kode: newKommuneCode,
             navn: "",
             href: "www.example.com",
             region: {}
@@ -57,6 +89,23 @@
         document.getElementById("region-id").innerText = kommune.kode
         document.getElementById("input-navn").value = kommune.navn
         document.getElementById("input-href").value = kommune.href
+        let selectElement = document.getElementById("input-region");
+
+        selectElement.innerHTML = "";
+
+        regioner.map((r) => {
+        let option = document.createElement("option");
+
+        option.value = r.kode;
+        option.text = r.navn;
+
+        if (r === kommune.region.kode) {
+            option.selected;
+        }
+
+        selectElement.appendChild(option);
+        });
+
         myModal.show()
     }
 
@@ -65,34 +114,20 @@
         kommune.kode = Number(document.getElementById("region-id").innerText)
         kommune.navn = document.getElementById("input-navn").value
         kommune.href = document.getElementById("input-href").value
-
-        //TODO Save region on server  --> We will do this in the class
-        // const data = {name: "lis Benson", bornDate: "2012-03-31", bornTime: "16:01"};
-        // const options = makeOptions("POST",data);
-        // fetch("https://somewhereoutthere/region",options);
-
-
-        //Figure out how to update local data
-        if (kommune.kode){ //Edit
-            apiKommunePut(kommune)
-
-            /*regions = regions.map(u =>
-                if(u.id===region.id){
-                    return region
-                } else {
-                    return u
-                }
-            )*/
-            kommuner = kommuner.map(r => (r.id === kommune.id) ? kommune : r)
+        kommune.region = {};
+        kommune.region.kode = document.getElementById("input-region").value
+    
+        if (kommune.id) {
+            apiKommunePut(kommune);
+            kommuner = kommuner.map(r => (r.id === kommune.id) ? kommune : r);
         } else {
-            apiKommunePost(kommune)
-
-            //kommune.kode = nextId++ //remove when calling api as db decided id
-            kommuner.push(kommune)
+            kommune = await apiKommunePost(kommune);
+            kommuner.push(kommune);
         }
-
-        makeRows()
+    
+        await makeRows();
     }
+    
 
     async function fetchKommuner() {
         const response = await fetch(URLkommuner)
@@ -156,7 +191,7 @@
 
     function apiKommunePost(kommune) {
         const options = makeOptions("POST", kommune);
-        fetch(URLkommuner, options)
+        return fetch(URLkommuner, options)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`Failed to create kommune: ${response.statusText}`);
@@ -164,8 +199,8 @@
                 return response.json();
             })
             .then(newKommune => {
-                // Handle the response from the server if needed
                 console.log("New kommune created:", newKommune);
+                return newKommune;
             })
             .catch(error => {
                 console.error("Error creating kommune:", error);
