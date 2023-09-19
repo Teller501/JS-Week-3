@@ -40,52 +40,59 @@
         evt.preventDefault()
         evt.stopPropagation()
         const target = evt.target;
-
+    
         if (target.dataset.idDelete) {
             //alert("Delete "+target.dataset.idDelete)
             const idToDelete = Number(target.dataset.idDelete)
-
+    
             apiKommuneDelete(idToDelete)
-
+    
             //region = regions.filter(u => (u.id == idToDelete) ? false : true)
             //kommuner = kommuner.filter(k => k.kode !== idToDelete)
-
+    
             makeRows()
         }
-
+    
         //if (target.dataset.dataEdit) {
             //alert(target.dataset.dataEdit)
             //alert(JSON.parse(target.dataset.dataEdit))
         //    const region = JSON.parse(target.dataset.dataEdit)
         //    showModal(region)
         if (target.dataset.idEdit){
-            const idToEdit = Number(target.dataset.idEdit)
-            const kommune = kommuner.find(s => s.id === idToEdit)
-            showModal(kommune)
+            const idToEdit = Number(target.dataset.idEdit);
+            const paddedIdToEdit = idToEdit.toString().padStart(4, '0');
+            const kommune = kommuner.find(k => k.kode === paddedIdToEdit);
+            showModal(kommune);
+
         }
+        
+        
     }
+    
 
     function makeNewkommune() {
         const existingKommuneCodes = kommuner.map(k => k.kode);
     
         let newKommuneCode = "0001";
-
+    
         if (existingKommuneCodes.length > 0) {
             const maxKommuneCode = Math.max(...existingKommuneCodes.map(code => parseInt(code, 10)));
             newKommuneCode = (maxKommuneCode + 1).toString().padStart(4, '0');
         }
-
+    
         showModal({
             kode: newKommuneCode,
             navn: "",
             href: "www.example.com",
             region: {}
-        })
+        });
     }
+    
+    
 
     function showModal(kommune) {
         const myModal = new bootstrap.Modal(document.getElementById('region-modal'))
-        document.getElementById("modal-title").innerText = kommune.kode ? "Edit region" : "Add region"
+        document.getElementById("modal-title").innerText = kommune.kode ? "Edit kommune" : "Add kommune"
         document.getElementById("region-id").innerText = kommune.kode
         document.getElementById("input-navn").value = kommune.navn
         document.getElementById("input-href").value = kommune.href
@@ -110,12 +117,12 @@
     }
 
     async function saveKommune() {
-        let kommune = {}
-        kommune.kode = Number(document.getElementById("region-id").innerText)
-        kommune.navn = document.getElementById("input-navn").value
-        kommune.href = document.getElementById("input-href").value
+        let kommune = {};
+        kommune.kode = document.getElementById("region-id").innerText;
+        kommune.navn = document.getElementById("input-navn").value;
+        kommune.href = document.getElementById("input-href").value;
         kommune.region = {};
-        kommune.region.kode = document.getElementById("input-region").value
+        kommune.region.kode = document.getElementById("input-region").value;
     
         if (kommune.id) {
             apiKommunePut(kommune);
@@ -208,13 +215,42 @@
     }
     
 
-    function apiKommunePut(){
-        // API call to put
-
+    function apiKommunePut(kommune) {
+        const options = makeOptions("PUT", kommune);
+        return fetch(URLkommuner, options)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Failed to edit kommune: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(editedKommune => {
+                console.log("Kommune edited:", editedKommune);
+                return editedKommune;
+            })
+            .catch(error => {
+                console.error("Error editing kommune:", error);
+            });
     }
+    
 
     function apiKommuneDelete(){
         // API call to delete
+        const options = makeOptions("DELETE");
+        return fetch(URLkommuner, options)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Failed to delete kommune: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(deletedKommune => {
+                console.log("Kommune deleted:", deletedKommune);
+                return deletedKommune;
+            })
+            .catch(error => {
+                console.error("Error deleting kommune:", error);
+            });
 
     }
       
