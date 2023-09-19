@@ -1,12 +1,15 @@
     let nextId = 200;
 
+    let kommuner = [
+    ];
+
     const URLkommuner = "http://localhost:3333/kommuner"; //For when we meet in the class - remember to set server.port = 3333
-    const URLregion  = "http://localhost:3333/kommuner"; //For when we meet in the class
+    const URLkommune  = "http://localhost:3333/kommuner"; //For when we meet in the class
 
     function setUpHandlers() {
         document.getElementById("region-table-body").onclick = handleTableClick
-        document.getElementById("btn-save").onclick = saveregion
-        document.getElementById("btn-add-region").onclick = makeNewregion
+        document.getElementById("btn-save").onclick = saveKommune
+        document.getElementById("btn-add-region").onclick = makeNewkommune
     }
     setUpHandlers()
 
@@ -19,10 +22,10 @@
             //alert("Delete "+target.dataset.idDelete)
             const idToDelete = Number(target.dataset.idDelete)
 
-            //apiregionDelete(idToDelete)
+            apiKommuneDelete(idToDelete)
 
             //region = regions.filter(u => (u.id == idToDelete) ? false : true)
-            regions = regions.filter(s => s.id !== idToDelete)
+            //kommuner = kommuner.filter(k => k.kode !== idToDelete)
 
             makeRows()
         }
@@ -34,33 +37,34 @@
         //    showModal(region)
         if (target.dataset.idEdit){
             const idToEdit = Number(target.dataset.idEdit)
-            const region = regions.find(s => s.id === idToEdit)
-            showModal(region)
+            const kommune = kommuner.find(s => s.id === idToEdit)
+            showModal(kommune)
         }
     }
 
-    function makeNewregion() {
+    function makeNewkommune() {
         showModal({
             kode: null,
             navn: "",
             href: "www.example.com",
+            region: {}
         })
     }
 
-    function showModal(region) {
+    function showModal(kommune) {
         const myModal = new bootstrap.Modal(document.getElementById('region-modal'))
-        document.getElementById("modal-title").innerText = region.kode ? "Edit region" : "Add region"
-        document.getElementById("region-id").innerText = region.kode
-        document.getElementById("input-navn").value = region.navn
-        document.getElementById("input-href").value = region.href
+        document.getElementById("modal-title").innerText = kommune.kode ? "Edit region" : "Add region"
+        document.getElementById("region-id").innerText = kommune.kode
+        document.getElementById("input-navn").value = kommune.navn
+        document.getElementById("input-href").value = kommune.href
         myModal.show()
     }
 
-    async function saveregion() {
-        let region = {}
-        region.kode = Number(document.getElementById("region-id").innerText)
-        region.navn = document.getElementById("input-navn").value
-        region.href = document.getElementById("input-href").value
+    async function saveKommune() {
+        let kommune = {}
+        kommune.kode = Number(document.getElementById("region-id").innerText)
+        kommune.navn = document.getElementById("input-navn").value
+        kommune.href = document.getElementById("input-href").value
 
         //TODO Save region on server  --> We will do this in the class
         // const data = {name: "lis Benson", bornDate: "2012-03-31", bornTime: "16:01"};
@@ -69,8 +73,8 @@
 
 
         //Figure out how to update local data
-        if (region.kode){ //Edit
-            //apiregionPut(region)
+        if (kommune.kode){ //Edit
+            apiKommunePut(kommune)
 
             /*regions = regions.map(u =>
                 if(u.id===region.id){
@@ -79,38 +83,43 @@
                     return u
                 }
             )*/
-            regions = regions.map(r => (r.id === region.id) ? region : r)
+            kommuner = kommuner.map(r => (r.id === kommune.id) ? kommune : r)
         } else {
-            //apiregionPost(region)
+            apiKommunePost(kommune)
 
-            region.kode = nextId++ //remove when calling api as db decided id
-            regions.push(region)
+            //kommune.kode = nextId++ //remove when calling api as db decided id
+            kommuner.push(kommune)
         }
 
         makeRows()
     }
 
-    async function fetchRegions() {
+    async function fetchKommuner() {
         const response = await fetch(URLkommuner)
         const data = await handleHttpErrors(response)
         return data
-      }
+    }
 
-    function makeRows(kommuner) {
-        //make rows from data
+      async function makeRows() {
+        // make rows from data
+        kommuner = await fetchKommuner();
+
         const rows = kommuner.map(k => `
         <tr>
             <td>${k.kode}</td>
             <td>${k.navn}</td>
             <td>${k.href}</td>
-            <td>${k.region.navn}</td>
+            <td>${k.region.navn}</td> <!-- Access nested property k.region.navn -->
             <td><a data-id-delete=${k.kode} href="#">Delete</a></td>
             <!-- <td><a data-data-edit='${JSON.stringify(k)}' href="#">Edit</a></td> -->
             <td><a data-id-edit='${k.kode}' href="#">Edit</a></td>
         </tr>
         `)
-        document.getElementById("region-table-body").innerHTML = rows.join("")
+        document.getElementById("region-table-body").innerHTML = rows.join("");
     }
+    
+    
+    
 
     // const data = {name: "lis Benson", bornDate: "2012-03-31", bornTime: "16:01"};
     // const options = makeOptions("POST",data);
@@ -141,8 +150,37 @@
     }
 
     async function main() {
-        const regions = await fetchRegions() 
-        makeRows(regions)
+        const kommuner = await fetchKommuner() 
+        makeRows(kommuner)
+    }
+
+    function apiKommunePost(kommune) {
+        const options = makeOptions("POST", kommune);
+        fetch(URLkommuner, options)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Failed to create kommune: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(newKommune => {
+                // Handle the response from the server if needed
+                console.log("New kommune created:", newKommune);
+            })
+            .catch(error => {
+                console.error("Error creating kommune:", error);
+            });
+    }
+    
+
+    function apiKommunePut(){
+        // API call to put
+
+    }
+
+    function apiKommuneDelete(){
+        // API call to delete
+
     }
       
       main()

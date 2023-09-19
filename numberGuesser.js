@@ -17,6 +17,7 @@ function setUpHandlers() {
     let inputNumber = document.getElementById("inputNumber").value
     let highscore = document.getElementById("highScore");
     let score = document.getElementById("score");
+    score.innerHTML -= 1;
     console.log(inputNumber)
     console.log(randomNumber)
 
@@ -27,7 +28,6 @@ function setUpHandlers() {
         }
     }else {
         document.getElementById("message").innerHTML = "Wrong!"
-        score.innerHTML -= 1;
         if(score.innerHTML <= 0){
             again();
         }
