@@ -151,7 +151,7 @@
             <td>${k.kode}</td>
             <td>${k.navn}</td>
             <td>${k.href}</td>
-            <td>${k.region.navn}</td> <!-- Access nested property k.region.navn -->
+            <td>${k.region.navn}</td>
             <td><a data-id-delete=${k.kode} href="#">Delete</a></td>
             <!-- <td><a data-data-edit='${JSON.stringify(k)}' href="#">Edit</a></td> -->
             <td><a data-id-edit='${k.kode}' href="#">Edit</a></td>
