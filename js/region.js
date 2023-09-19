@@ -243,7 +243,7 @@
                 return response.json();
             })
             .then(deletedKommune => {
-                console.log("deleted kommune:", deletedKommune);
+                console.log("deleted: ", deletedKommune);
             })
             .catch(error => {
                 console.error("Error deleting kommune:", error);
